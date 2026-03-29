@@ -1029,8 +1029,6 @@ Pierre : Oui, j'aimerais savoir si on peut intégrer ça avec notre CRM actuel S
       if (pill) {
         pill.className = `status-pill ${missing.length ? 'status-warn' : 'status-ok'}`;
         pill.textContent = missing.length ? 'Configuration incomplète' : 'Moteur prêt ✅';
-      }
-    }
     if (window.S360AI && typeof window.S360AI.getApiBaseUrl === 'function') {
       const currentApiBase = window.S360AI.getApiBaseUrl();
       const apiInput = document.getElementById('api-base-url');
