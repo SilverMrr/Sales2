@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales360 - Pipeline</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ── Kanban layout ────────────────────────────── */
+    .kanban-board {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      overflow-x: auto;
+      padding-bottom: 16px;
+    }
+    .kanban-column {
+      flex: 0 0 240px;
+      background: var(--bg-light, #f8f9fa);
+      border: 1px solid var(--border-light, #e5e7eb);
+      border-radius: 12px;
+      padding: 14px 12px;
+      min-height: 120px;
+    }
+    .kanban-column.drag-over {
+      background: #fff7ed;
+      border-color: var(--accent-orange, #f97316);
+      box-shadow: 0 0 0 2px rgba(249,115,22,0.25);
+    }
+    .kanban-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .kanban-title { font-size: 14px; font-weight: 700; margin: 0; }
+    .kanban-count {
+      background: var(--accent-orange, #f97316);
+      color: #fff;
+      border-radius: 50%;
+      width: 22px; height: 22px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .kanban-value { font-size: 11px; font-weight: 700; color: var(--text-gray, #6b7280); margin-top: 2px; }
+    .kanban-cards-zone { min-height: 60px; }
+
+    /* ── Cards ────────────────────────────────────── */
+    .kanban-card {
+      background: #fff;
+      border: 1px solid var(--border-light, #e5e7eb);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+      cursor: grab;
+      user-select: none;
+      position: relative;
+      transition: box-shadow 0.15s, transform 0.15s;
+    }
+    .kanban-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+    }
+    .kanban-card.is-dragging {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .kanban-card-ghost {
+      background: #fff;
+      border: 2px dashed var(--accent-orange, #f97316);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      pointer-events: none;
+      box-sizing: border-box;
+    }
+    .kanban-card-flying {
+      position: fixed;
+      z-index: 9999;
+      pointer-events: none;
+      border-radius: 8px;
+      background: #fff;
+      border: 1px solid var(--border-light, #e5e7eb);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.10);
+      padding: 12px;
+      transform: rotate(2deg) scale(1.03);
+      transition: transform 0.1s;
+      will-change: transform, left, top;
+    }
+    .kanban-card-title { font-size: 14px; font-weight: 600; color: var(--text-dark, #111827); }
+    .kanban-card-contact { color: var(--text-gray, #6b7280); font-size: 13px; margin: 6px 0; }
+    .kanban-card-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+    .drag-handle {
+      position: absolute;
+      top: 10px; right: 10px;
+      color: var(--border-light, #d1d5db);
+      font-size: 14px;
+      line-height: 1;
+      cursor: grab;
+    }
+    .kanban-card:hover .drag-handle { color: var(--accent-orange, #f97316); }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">
+        <div class="logo-icon">S3</div>
+        <span>Sales360</span>
+      </div>
+      <nav>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="index.html" class="nav-link">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            <span>Accueil</span>
+          </a></li>
+          <li class="nav-item"><a href="dashboard.html" class="nav-link">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <span>Tableau de bord</span>
+          </a></li>
+          <li class="nav-item"><a href="contacts.html" class="nav-link">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            <span>Contacts</span>
+          </a></li>
+          <li class="nav-item"><a href="pipeline.html" class="nav-link active">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            <span>Pipeline</span>
+          </a></li>
+          <li class="nav-item"><a href="telephony.html" class="nav-link">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+            <span>Téléphonie</span>
+          </a></li>
+          <li class="nav-item"><a href="visio.html" class="nav-link">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            <span>Visioconférence</span>
+          </a></li>
+          <li class="nav-item"><a href="recommendations.html" class="nav-link">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            <span>Recommandations</span>
+            <span class="nav-badge" id="sidebar-badge" style="display:none">0</span>
+          </a></li>
+          <li class="nav-item"><a href="settings.html" class="nav-link">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <span>Paramètres</span>
+          </a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left">
+          <h1 data-i18n="pipelineTitle">Pipeline commercial</h1>
+        </div>
+        <div class="topbar-right">
+          <div class="lang-switch">
+            <button class="lang-btn active" data-lang="fr">FR</button>
+            <button class="lang-btn" data-lang="en">EN</button>
+          </div>
+          <div class="user-profile">
+            <div class="user-avatar">JD</div>
+          </div>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="kanban-board" id="kanban-board"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="main.js"></script>
+  <script>
+  // ── Pipeline data ──────────────────────────────────────────────
+  const PIPELINE_STORAGE_KEY = "s360_pipeline_cards";
+
+  const DEFAULT_CARDS = [
+    { id:"c1",  col:"prospection",   company:"Entreprise TechCorp",    contact:"Sophie Martin",   value:25000, badge:"Nouveau",             badgeClass:"badge-info"    },
+    { id:"c2",  col:"prospection",   company:"Innovation Labs",         contact:"Pierre Dupont",   value:18500, badge:"Nouveau",             badgeClass:"badge-info"    },
+    { id:"c3",  col:"prospection",   company:"Digital Solutions",       contact:"Marc Bernard",    value:32000, badge:"Suivi",               badgeClass:"badge-warning" },
+    { id:"c4",  col:"prospection",   company:"StartupXYZ",              contact:"Marie Leroy",     value:12000, badge:"Nouveau",             badgeClass:"badge-info"    },
+    { id:"c5",  col:"qualification", company:"Enterprise Solutions",    contact:"Jean Leblanc",    value:45000, badge:"En cours",            badgeClass:"badge-warning" },
+    { id:"c6",  col:"qualification", company:"Global Tech",             contact:"Claire Dubois",   value:28000, badge:"En cours",            badgeClass:"badge-warning" },
+    { id:"c7",  col:"qualification", company:"Consulting Group",        contact:"Thomas Petit",    value:38500, badge:"Evaluation",          badgeClass:"badge-info"    },
+    { id:"c8",  col:"proposition",   company:"Media Corp",              contact:"Julie Martin",    value:52000, badge:"Proposition envoyée", badgeClass:"badge-warning" },
+    { id:"c9",  col:"proposition",   company:"Digital Agency",          contact:"Antoine Roux",    value:29800, badge:"Révision",            badgeClass:"badge-info"    },
+    { id:"c10", col:"negociation",   company:"Finance Solutions",       contact:"Nicolas Blanc",   value:67000, badge:"Négociation",         badgeClass:"badge-warning" },
+    { id:"c11", col:"negociation",   company:"Healthcare Tech",         contact:"Laura Mercier",   value:41500, badge:"Contrat",             badgeClass:"badge-warning" },
+    { id:"c12", col:"conclue",       company:"Retail Solutions",        contact:"Émilie Durand",   value:55000, badge:"Gagné",               badgeClass:"badge-success", won:true  },
+    { id:"c13", col:"conclue",       company:"Marketing Pro",           contact:"Olivier Simon",   value:33200, badge:"Gagné",               badgeClass:"badge-success", won:true  },
+    { id:"c14", col:"conclue",       company:"Logistics Inc",           contact:"Sarah Moreau",    value:0,     badge:"Perdu",               badgeClass:"badge-danger",  lost:true },
+  ];
+
+  const COLUMNS = [
+    { id:"prospection",   label:"Prospection"  },
+    { id:"qualification", label:"Qualification" },
+    { id:"proposition",   label:"Proposition"  },
+    { id:"negociation",   label:"Négociation"  },
+    { id:"conclue",       label:"Conclue"      },
+  ];
+
+  // ── State ──────────────────────────────────────────────────────
+  function loadCards() {
+    try {
+      const s = JSON.parse(localStorage.getItem(PIPELINE_STORAGE_KEY));
+      return Array.isArray(s) && s.length ? s : JSON.parse(JSON.stringify(DEFAULT_CARDS));
+    } catch { return JSON.parse(JSON.stringify(DEFAULT_CARDS)); }
+  }
+  function saveCards() { localStorage.setItem(PIPELINE_STORAGE_KEY, JSON.stringify(cards)); }
+
+  let cards = loadCards();
+
+  // ── Helpers ────────────────────────────────────────────────────
+  function fmtValue(v) { return v ? "€" + Number(v).toLocaleString("fr-FR") : "€0"; }
+
+  function cardHTML(card) {
+    const valueColor = card.won ? "#10b981" : card.lost ? "#ef4444" : "var(--accent-orange, #f97316)";
+    return `
+      <span class="drag-handle" aria-hidden="true">⠿</span>
+      <div class="kanban-card-title">${card.company}</div>
+      <p class="kanban-card-contact">Contact : ${card.contact}</p>
+      <div class="kanban-card-meta">
+        <span style="font-weight:600;color:${valueColor};">${fmtValue(card.value)}</span>
+        <span class="badge ${card.badgeClass}">${card.badge}</span>
+      </div>
+    `;
+  }
+
+  // ── Render ─────────────────────────────────────────────────────
+  function renderBoard() {
+    const board = document.getElementById("kanban-board");
+    board.innerHTML = "";
+    COLUMNS.forEach(col => {
+      const colCards = cards.filter(c => c.col === col.id);
+      const colValue = colCards.reduce((s, c) => s + (c.value || 0), 0);
+      const colEl = document.createElement("div");
+      colEl.className = "kanban-column";
+      colEl.dataset.col = col.id;
+      colEl.innerHTML = `
+        <div class="kanban-header">
+          <div>
+            <h3 class="kanban-title">${col.label}</h3>
+            <div class="kanban-value">${fmtValue(colValue)}</div>
+          </div>
+          <span class="kanban-count">${colCards.length}</span>
+        </div>
+        <div class="kanban-cards-zone" data-col="${col.id}"></div>
+      `;
+      board.appendChild(colEl);
+      const zone = colEl.querySelector(".kanban-cards-zone");
+      colCards.forEach(card => {
+        const el = document.createElement("div");
+        el.className = "kanban-card";
+        el.dataset.cardId = card.id;
+        el.innerHTML = cardHTML(card);
+        zone.appendChild(el);
+      });
+    });
+    initPointerDrag();
+  }
+
+  // ── Pointer-based drag & drop ──────────────────────────────────
+  let dragState = null; // { cardId, flyEl, ghost, originZone, offsetX, offsetY }
+
+  function initPointerDrag() {
+    document.querySelectorAll(".kanban-card").forEach(card => {
+      card.addEventListener("pointerdown", onPointerDown);
+    });
+  }
+
+  function onPointerDown(e) {
+    // Only left button or touch
+    if (e.button !== undefined && e.button !== 0) return;
+
+    const card = e.currentTarget;
+    const rect = card.getBoundingClientRect();
+
+    // Create flying clone
+    const flyEl = card.cloneNode(true);
+    flyEl.className = "kanban-card-flying";
+    flyEl.style.width  = rect.width  + "px";
+    flyEl.style.height = rect.height + "px";
+    flyEl.style.left   = rect.left   + "px";
+    flyEl.style.top    = rect.top    + "px";
+    document.body.appendChild(flyEl);
+
+    // Create ghost placeholder in place of card
+    const ghost = document.createElement("div");
+    ghost.className = "kanban-card-ghost";
+    ghost.style.height = rect.height + "px";
+    card.parentNode.insertBefore(ghost, card);
+
+    // Hide original
+    card.classList.add("is-dragging");
+
+    dragState = {
+      cardId:     card.dataset.cardId,
+      flyEl,
+      ghost,
+      originZone: card.closest(".kanban-cards-zone"),
+      offsetX:    e.clientX - rect.left,
+      offsetY:    e.clientY - rect.top,
+    };
+
+    card.setPointerCapture(e.pointerId);
+    card.addEventListener("pointermove", onPointerMove);
+    card.addEventListener("pointerup",   onPointerUp);
+    card.addEventListener("pointercancel", onPointerCancel);
+
+    e.preventDefault();
+  }
+
+  function onPointerMove(e) {
+    if (!dragState) return;
+    const { flyEl, ghost, offsetX, offsetY } = dragState;
+
+    // Move flying clone
+    flyEl.style.left = (e.clientX - offsetX) + "px";
+    flyEl.style.top  = (e.clientY - offsetY) + "px";
+
+    // Find the zone under cursor
+    flyEl.style.display = "none";
+    const below = document.elementFromPoint(e.clientX, e.clientY);
+    flyEl.style.display = "";
+
+    const zone = below ? below.closest(".kanban-cards-zone") : null;
+
+    // Remove old column highlight
+    document.querySelectorAll(".kanban-column.drag-over").forEach(c => c.classList.remove("drag-over"));
+
+    if (!zone) return;
+
+    zone.closest(".kanban-column").classList.add("drag-over");
+
+    // Find card under cursor to insert ghost before it
+    const cards = [...zone.querySelectorAll(".kanban-card:not(.is-dragging)")];
+    let insertBefore = null;
+    for (const c of cards) {
+      const r = c.getBoundingClientRect();
+      if (e.clientY < r.top + r.height / 2) { insertBefore = c; break; }
+    }
+
+    if (insertBefore) {
+      zone.insertBefore(ghost, insertBefore);
+    } else {
+      zone.appendChild(ghost);
+    }
+  }
+
+  function onPointerUp(e) {
+    if (!dragState) return;
+    const { cardId, flyEl, ghost, originZone } = dragState;
+
+    // Find target zone from ghost's current parent
+    const targetZone = ghost.parentNode;
+    const targetCol  = targetZone ? targetZone.dataset.col : null;
+
+    // Animate flying card to ghost position before committing
+    if (targetZone && targetCol) {
+      const ghostRect = ghost.getBoundingClientRect();
+      flyEl.style.transition = "left 0.18s cubic-bezier(.4,0,.2,1), top 0.18s cubic-bezier(.4,0,.2,1), transform 0.18s, box-shadow 0.18s";
+      flyEl.style.left      = ghostRect.left + "px";
+      flyEl.style.top       = ghostRect.top  + "px";
+      flyEl.style.transform = "rotate(0deg) scale(1)";
+      flyEl.style.boxShadow = "none";
+    }
+
+    setTimeout(() => {
+      cleanup();
+      if (targetCol) {
+        commitDrop(cardId, targetCol, ghost);
+      } else {
+        renderBoard();
+      }
+    }, 180);
+
+    e.currentTarget.removeEventListener("pointermove", onPointerMove);
+    e.currentTarget.removeEventListener("pointerup",   onPointerUp);
+    e.currentTarget.removeEventListener("pointercancel", onPointerCancel);
+    dragState = null;
+  }
+
+  function onPointerCancel(e) {
+    if (!dragState) return;
+    cleanup();
+    renderBoard();
+    e.currentTarget.removeEventListener("pointermove", onPointerMove);
+    e.currentTarget.removeEventListener("pointerup",   onPointerUp);
+    e.currentTarget.removeEventListener("pointercancel", onPointerCancel);
+    dragState = null;
+  }
+
+  function cleanup() {
+    if (dragState) {
+      dragState.flyEl?.remove();
+      dragState.ghost?.remove();
+      document.querySelectorAll(".kanban-card.is-dragging").forEach(c => c.classList.remove("is-dragging"));
+      document.querySelectorAll(".kanban-column.drag-over").forEach(c => c.classList.remove("drag-over"));
+    }
+  }
+
+  function commitDrop(cardId, targetCol, ghost) {
+    // Figure out insertBefore card id from DOM ghost position
+    let insertBeforeId = null;
+    if (ghost && ghost.parentNode) {
+      let next = ghost.nextElementSibling;
+      while (next) {
+        if (next.dataset && next.dataset.cardId) { insertBeforeId = next.dataset.cardId; break; }
+        next = next.nextElementSibling;
+      }
+    }
+
+    const idx = cards.findIndex(c => c.id === cardId);
+    if (idx === -1) { renderBoard(); return; }
+    const [moved] = cards.splice(idx, 1);
+    moved.col = targetCol;
+
+    if (insertBeforeId) {
+      const insertIdx = cards.findIndex(c => c.id === insertBeforeId);
+      if (insertIdx !== -1) {
+        cards.splice(insertIdx, 0, moved);
+      } else {
+        cards.push(moved);
+      }
+    } else {
+      // Append after last card of this column
+      const lastIdx = cards.reduce((acc, c, i) => c.col === targetCol ? i : acc, -1);
+      cards.splice(lastIdx + 1, 0, moved);
+    }
+
+    saveCards();
+    renderBoard();
+  }
+
+  // ── Init ───────────────────────────────────────────────────────
+  document.addEventListener("DOMContentLoaded", renderBoard);
+  </script>
+</body>
+</html>

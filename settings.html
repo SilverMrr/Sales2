@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales360 - Parametres</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .cfg-grid { display:grid; gap:16px; }
+    .cfg-sub { background:var(--bg-light); border:1px solid var(--border-light); border-radius:var(--radius-md); padding:16px; margin-top:12px; }
+    .cfg-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+    .status-pill { display:inline-flex; align-items:center; gap:8px; padding:6px 12px; border-radius:20px; font-size:12px; font-weight:700; }
+    .status-ok   { background:#dcfce7; color:#166534; }
+    .status-warn { background:#fef3c7; color:#92400e; }
+  </style>
+  <script>
+    function notify(msg) { alert(msg); }
+
+    function refreshAiUi() {
+      if (!window.S360AI) {
+        document.getElementById('ai-active-summary').textContent = 'Moteur IA non charge';
+        document.getElementById('ai-missing').textContent = 'Rechargez la page (Ctrl+F5).';
+        return;
+      }
+      var cfg = window.S360AI.getAiConfig();
+      document.getElementById('audio-api-key').value = cfg.audioApiKey || '';
+      document.getElementById('text-api-key').value  = cfg.textApiKey  || '';
+
+      var missing = window.S360AI.getMissingRequirements();
+      document.getElementById('ai-missing').textContent = missing.length
+        ? 'Manquant : ' + missing.join(' - ')
+        : 'Configuration complete';
+
+      var pill = document.getElementById('ai-active-pill');
+      pill.className   = 'status-pill ' + (missing.length ? 'status-warn' : 'status-ok');
+      pill.textContent = missing.length ? 'Configuration incomplete' : 'Pret';
+    }
+
+    function saveAiSettings() {
+      if (!window.S360AI) { notify('Moteur IA non charge.'); return; }
+      window.S360AI.saveAiConfig({
+        mode:          'split_apis',
+        audioProvider: 'openai',
+        audioApiKey:   document.getElementById('audio-api-key').value.trim(),
+        textProvider:  'openai',
+        textApiKey:    document.getElementById('text-api-key').value.trim(),
+        textModel:     'gpt-4o-mini'
+      });
+      refreshAiUi();
+      notify('Configuration IA sauvegardee');
+    }
+
+    function testAudioConfig() {
+      var key = document.getElementById('audio-api-key').value.trim();
+      if (!window.S360AI) { notify('Moteur IA non charge.'); return; }
+      window.S360AI.testAudioProviderKey('openai', key)
+        .then(function() { notify('Cle transcription valide'); })
+        .catch(function(e) { notify('Test transcription echoue : ' + e.message); });
+    }
+
+    function testTextConfig() {
+      var key = document.getElementById('text-api-key').value.trim();
+      if (!window.S360AI) { notify('Moteur IA non charge.'); return; }
+      window.S360AI.testTextProviderKey('openai', key)
+        .then(function() { notify('Cle analyse valide'); })
+        .catch(function(e) { notify('Test analyse echoue : ' + e.message); });
+    }
+  </script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo"><div class="logo-icon">S3</div><span>Sales360</span></div>
+      <nav>
+        <ul class="nav-menu">
+          <li class="nav-item"><a href="index.html" class="nav-link">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            <span>Accueil</span>
+          </a></li>
+          <li class="nav-item"><a href="dashboard.html" class="nav-link">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <span>Tableau de bord</span>
+          </a></li>
+          <li class="nav-item"><a href="contacts.html" class="nav-link">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            <span>Contacts</span>
+          </a></li>
+          <li class="nav-item"><a href="pipeline.html" class="nav-link">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            <span>Pipeline</span>
+          </a></li>
+          <li class="nav-item"><a href="telephony.html" class="nav-link">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+            <span>Telephonie</span>
+          </a></li>
+          <li class="nav-item"><a href="visio.html" class="nav-link">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            <span>Visioconference</span>
+          </a></li>
+          <li class="nav-item"><a href="recommendations.html" class="nav-link">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            <span>Recommandations</span>
+            <span class="nav-badge" id="sidebar-badge" style="display:none">0</span>
+          </a></li>
+          <li class="nav-item"><a href="settings.html" class="nav-link active">
+            <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <span>Parametres</span>
+          </a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-left"><h1>Parametres</h1></div>
+        <div class="topbar-right">
+          <div class="lang-switch">
+            <button class="lang-btn active" data-lang="fr">FR</button>
+            <button class="lang-btn" data-lang="en">EN</button>
+          </div>
+          <div class="user-profile"><div class="user-avatar">JD</div></div>
+        </div>
+      </header>
+
+      <div class="content">
+
+        <!-- AI Config Card -->
+        <div class="card">
+          <div class="settings-section">
+            <h2 class="settings-title">Configuration IA</h2>
+            <div class="settings-item" style="align-items:flex-start;">
+              <div class="cfg-grid" style="width:100%;">
+
+                <!-- Status summary -->
+                <div>
+                  <div class="settings-label">Statut de la configuration IA</div>
+                  <div class="settings-description" id="ai-active-summary">APIs separees - GPT-4o-mini-transcribe + GPT-4o-mini</div>
+                  <div id="ai-active-pill" class="status-pill status-warn" style="margin-top:8px;">Configuration incomplete</div>
+                </div>
+
+                <!-- Transcription audio -->
+                <div class="cfg-sub">
+                  <h3 style="margin:0 0 10px 0; font-size:16px;">Transcription audio</h3>
+                  <div class="settings-description" style="margin-bottom:10px;">Modele : <strong>gpt-4o-mini-transcribe</strong> (OpenAI)</div>
+                  <div class="cfg-row">
+                    <input type="password" id="audio-api-key" class="form-input" placeholder="Cle API OpenAI pour la transcription" style="flex:1; min-width:280px;">
+                    <button class="btn btn-secondary" type="button" onclick="testAudioConfig()">Tester</button>
+                  </div>
+                </div>
+
+                <!-- Analyse et resume -->
+                <div class="cfg-sub" style="margin-top:0;">
+                  <h3 style="margin:0 0 10px 0; font-size:16px;">Analyse et resume des appels</h3>
+                  <div class="settings-description" style="margin-bottom:10px;">Modele : <strong>gpt-4o-mini</strong> (OpenAI)</div>
+                  <div class="cfg-row">
+                    <input type="password" id="text-api-key" class="form-input" placeholder="Cle API OpenAI pour l'analyse CRM" style="flex:1; min-width:280px;">
+                    <button class="btn btn-secondary" type="button" onclick="testTextConfig()">Tester</button>
+                  </div>
+                </div>
+
+                <!-- Save button -->
+                <div class="cfg-row">
+                  <button class="btn btn-primary" type="button" onclick="saveAiSettings()">Sauvegarder la configuration IA</button>
+                </div>
+                <div id="ai-missing" class="settings-description" style="color:#b45309;"></div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profile / Notifications / Security -->
+        <div class="card" style="margin-top:16px;">
+          <div class="settings-section">
+            <h2 class="settings-title">Profil</h2>
+            <div class="settings-item">
+              <div><div class="settings-label">Nom complet</div><div class="settings-description">Jean Dupont</div></div>
+              <button class="btn btn-secondary">Modifier</button>
+            </div>
+            <div class="settings-item">
+              <div><div class="settings-label">Email</div><div class="settings-description">jean.dupont@sales360.fr</div></div>
+              <button class="btn btn-secondary">Modifier</button>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h2 class="settings-title">Notifications</h2>
+            <div class="settings-item">
+              <div><div class="settings-label">Notifications email</div><div class="settings-description">Recevoir les alertes et resumes d'activite</div></div>
+              <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+            <div class="settings-item">
+              <div><div class="settings-label">Notifications appels</div><div class="settings-description">Alerte en cas d'appel entrant</div></div>
+              <label class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h2 class="settings-title">Securite</h2>
+            <div class="settings-item">
+              <div><div class="settings-label">Mot de passe</div><div class="settings-description">Derniere modification il y a 30 jours</div></div>
+              <button class="btn btn-secondary">Changer</button>
+            </div>
+            <div class="settings-item">
+              <div><div class="settings-label">Authentification a deux facteurs</div><div class="settings-description">Securite renforcee du compte</div></div>
+              <label class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></label>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="ai-engine.js"></script>
+  <script src="main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', refreshAiUi);
+  </script>
+</body>
+</html>
